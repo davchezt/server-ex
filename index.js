@@ -19,6 +19,7 @@ app.engine('html', require('ejs').renderFile);
 
 // Helper
 const log = require("./helpers/loger");
+const Config = require('./config.json');
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -34,20 +35,27 @@ app.use((req, res, next) => {
 });
 
 process.env.JWT_KEY = "DaVchezt.4Bahagia4";
-process.env.NODE_ENV = "development";
+process.env.NODE_ENV = Config.mode;
 const isDev = process.env.NODE_ENV === "development" ? true : false;
-process.env.MONGO_URL = isDev ? 'mongodb://localhost:27017/agrifarm':''; // mongodb://admin:admin123@ds123624.mlab.com:23624/agrifarm
+const dbConfig = Config.database;
 
-let port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
-    mongoURLLabel = "";
+// MongoDB
+process.env.MONGO_URL = isDev ? 'mongodb://localhost:27017/agrifarm' : null;
+process.env.DATABASE_SERVICE_NAME = 'Militant';
+process.env.MILITANT_SERVICE_HOST = dbConfig.host;
+process.env.MILITANT_SERVICE_PORT = dbConfig.port;
+process.env.MILITANT_DATABASE     = dbConfig.database;
+process.env.MILITANT_PASSWORD     = dbConfig.password;
+process.env.MILITANT_USER         = dbConfig.user;
+
+let port = process.env.PORT || Config.port,
+    ip   = process.env.IP   || Config.ip,
+    mongoURL = process.env.MONGO_URL;
 let db = null,
     dbDetails = new Object();
 
-if (mongoURL == null) {
+if (!isDev) {
   let mongoHost, mongoPort, mongoDatabase, mongoPassword, mongoUser;
-  // If using plane old env vars via service discovery
   if (process.env.DATABASE_SERVICE_NAME) {
     let mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase();
     mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'];
@@ -55,29 +63,14 @@ if (mongoURL == null) {
     mongoDatabase = process.env[mongoServiceName + '_DATABASE'];
     mongoPassword = process.env[mongoServiceName + '_PASSWORD'];
     mongoUser = process.env[mongoServiceName + '_USER'];
-
-  // If using env vars from secret from service binding  
-  } else if (process.env.database_name) {
-    mongoDatabase = process.env.database_name;
-    mongoPassword = process.env.password;
-    mongoUser = process.env.username;
-    let mongoUriParts = process.env.uri && process.env.uri.split("//");
-    if (mongoUriParts.length == 2) {
-      mongoUriParts = mongoUriParts[1].split(":");
-      if (mongoUriParts && mongoUriParts.length == 2) {
-        mongoHost = mongoUriParts[0];
-        mongoPort = mongoUriParts[1];
-      }
-    }
   }
 
   if (mongoHost && mongoPort && mongoDatabase) {
-    mongoURLLabel = mongoURL = 'mongodb://';
+    mongoURL = 'mongodb://';
     if (mongoUser && mongoPassword) {
       mongoURL += mongoUser + ':' + mongoPassword + '@';
     }
     // Provide UI label that excludes user id and pw
-    mongoURLLabel += mongoHost + ':' + mongoPort + '/' + mongoDatabase;
     mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
   }
 }
@@ -92,9 +85,9 @@ mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
   
   db = conn;
   dbDetails.databaseName = db.databaseName;
-  dbDetails.url = mongoURLLabel ? mongoURLLabel : conn.client.s.url;
+  dbDetails.url = conn.client.s.url ? conn.client.s.url : mongoURL;
   dbDetails.type = 'MongoDB';
-  log.success('Connected to MongoDB at: ' + conn.client.s.url);
+  log.success('Connected to MongoDB at: ' + conn.client.s.url ? conn.client.s.url : mongoURL);
 });
 mongoose.Promise = global.Promise;
 

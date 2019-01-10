@@ -1,0 +1,12 @@
+{
+  "mode": "production",
+  "ip": "0.0.0.0",
+  "port": "8080",
+  "database": {
+    "host": "ds052629.mlab.com",
+    "port": "52629",
+    "database": "militant",
+    "password": "4Bahagia4",
+    "user": "davchezt"
+  }
+}
