@@ -85,7 +85,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
   
   db = conn;
   dbDetails.databaseName = db.databaseName;
-  dbDetails.url = conn.client.s.url ? conn.client.s.url : mongoURL;
+  dbDetails.url = (conn.client.s.url ? conn.client.s.url : mongoURL).replace(dbConfig.user + ':' + dbConfig.password, 'xxx:xxx');
   dbDetails.type = 'MongoDB';
   log.success('Connected to MongoDB at: ' + conn.client.s.url ? conn.client.s.url : mongoURL);
 });
