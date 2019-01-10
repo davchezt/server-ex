@@ -63,3 +63,6 @@ typings/
 # package generated
 package-lock.json
 yarn.lock
+
+# config
+config.json

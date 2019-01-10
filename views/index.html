@@ -42,7 +42,7 @@ $ git push origin heroku
       <h2>Request information</h2>
       <p>Page view count:
       <% if (pageCountMessage) { %>
-          <span class="code" id="count-value"><%=pageCountMessage%></span>
+          <span class="code" id="count-value"><%=pageCountMessage%></span> (<a href="/pagecount" title="view json format">json</a>)
           </p>
           <div class="code"><h3>DB Connection Info:</h3>
             <table style='margin-left: 20px'>
