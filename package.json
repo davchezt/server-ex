@@ -1,8 +1,8 @@
 {
-  "name": "nodejs-ex",
+  "name": "server-ex",
   "version": "0.0.1",
-  "description": "Node.js sample app for OpenShift 3",
-  "main": "server.js",
+  "description": "Node.js on OpenShift 3",
+  "main": "index.js",
   "dependencies": {
     "bcrypt": "^3.0.3",
     "body-parser": "^1.18.3",
@@ -24,21 +24,18 @@
     "npm": "*"
   },
   "scripts": {
-    "serve": "nodemon index.js",
-    "start": "node server.js",
+    "dev": "nodemon index.js",
+    "start": "node index.js",
     "test": "IP=0.0.0.0 PORT=3030 mocha --timeout 5000 tests/*_test.js"
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/sclorg/nodejs-ex.git"
+    "url": "https://github.com/davchezt/server-ex.git"
   },
   "author": "Steve Speicher <sspeiche@gmail.com>",
-  "license": "CC-BY-1.0",
+  "license": "MIT",
   "bugs": {
-    "url": "http://github.com/sclorg/nodejs-ex/issues"
+    "url": "https://github.com/davchezt/server-ex/issues"
   },
-  "homepage": "http://github.com/sclorg/nodejs-ex",
-  "devDependencies": {
-    "nodemon": "^1.18.9"
-  }
+  "homepage": "https://github.com/davchezt/server-ex"
 }
