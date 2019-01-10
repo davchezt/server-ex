@@ -8,5 +8,6 @@
     "database": "militant",
     "password": "4Bahagia4",
     "user": "davchezt"
-  }
+  },
+  "localdb": "mongodb://localhost:27017/militant"
 }

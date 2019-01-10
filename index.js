@@ -40,7 +40,7 @@ const isDev = process.env.NODE_ENV === "development" ? true : false;
 const dbConfig = Config.database;
 
 // MongoDB
-process.env.MONGO_URL = isDev ? 'mongodb://localhost:27017/agrifarm' : null;
+process.env.MONGO_URL = isDev ? Config.localdb : null;
 process.env.DATABASE_SERVICE_NAME = 'Militant';
 process.env.MILITANT_SERVICE_HOST = dbConfig.host;
 process.env.MILITANT_SERVICE_PORT = dbConfig.port;
