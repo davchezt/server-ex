@@ -87,6 +87,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
   dbDetails.databaseName = db.databaseName;
   dbDetails.url = (conn.client.s.url ? conn.client.s.url : mongoURL).replace(dbConfig.user + ':' + dbConfig.password, 'xxx:xxx');
   dbDetails.type = 'MongoDB';
+  dbDetails.remote = isDev ? false : true;
   log.success('Connected to MongoDB at: ' + conn.client.s.url ? conn.client.s.url : mongoURL);
 });
 mongoose.Promise = global.Promise;

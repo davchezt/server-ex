@@ -11,7 +11,7 @@
 
 <section class='container'>
   <hgroup>
-    <h1>Militant Server</h1>
+    <h1>Militant Server (<%= dbInfo.remote ? 'production':'development' %>)</h1>
   </hgroup>
 
   <div class="row">
@@ -48,6 +48,7 @@ $ git push origin heroku
             <table style='margin-left: 20px'>
                 <tr><td>Type:</td><td><%= dbInfo.type %></td></tr>
                 <tr><td>URL:</td><td><%= dbInfo.url %></td></tr>
+                <tr><td>Remote:</td><td><%= dbInfo.remote %></td></tr>
             </table>
           </div>
       <% } else { %>
