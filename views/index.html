@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>Militant Server</title>
+  <title>AgriFarm Server</title>
 
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
@@ -11,7 +11,7 @@
 
 <section class='container'>
   <hgroup>
-    <h1>Militant Server (<%= dbInfo.remote ? 'production':'development' %>)</h1>
+    <h1>AgriFarm Server (<%= dbInfo.remote ? 'production':'development' %>)</h1>
   </hgroup>
 
   <div class="row">
@@ -29,13 +29,10 @@ $ git clone https://github.com/davchezt/server-ex.git
 # navigate to project directory
 $ cd server-ex
 
-# switch to heroku branch
-$ git checkout heroku
-
-# Commit your changes and push to heroku branch
+# Commit your changes and push
 $ git add .
 $ git commit -a -m 'Some commit message'
-$ git push origin heroku
+$ git push origin master
 </pre>
       </section>
 

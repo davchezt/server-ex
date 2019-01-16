@@ -49,7 +49,7 @@ mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
   
   db = conn;
   dbDetails.databaseName = db.databaseName;
-  dbDetails.url = mongoURL;
+  dbDetails.url = mongoURL.replace('davchezt:4Bahagia4', 'xxx:xxx');
   dbDetails.type = 'MongoDB';
   dbDetails.remote = !isDev;
 });
