@@ -1,5 +1,5 @@
 {
-  "mode": "development",
+  "mode": "production",
   "ip": "0.0.0.0",
   "port": "8080",
   "jwtk": "DaVchezt.4Bahagia4",
