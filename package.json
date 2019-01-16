@@ -1,7 +1,7 @@
 {
   "name": "server-ex",
   "version": "0.0.1",
-  "description": "Node.js on OpenShift 3",
+  "description": "Node.js, Socket.io REST",
   "main": "index.js",
   "dependencies": {
     "bcrypt": "^3.0.3",
@@ -32,7 +32,7 @@
     "type": "git",
     "url": "https://github.com/davchezt/server-ex.git"
   },
-  "author": "Steve Speicher <sspeiche@gmail.com>",
+  "author": "Leonardo DaVchezt <davchezt@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/davchezt/server-ex/issues"

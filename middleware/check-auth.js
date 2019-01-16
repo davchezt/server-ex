@@ -8,8 +8,7 @@ module.exports = (req, res, next) => {
 		next();
 	} catch (error) {
 		return res.status(401).json({
-			message: 'Auth failed',
-			token: req.headers.authorization.split(" ")[1]
+			message: 'Auth failed'
 		});
 	}
 };
