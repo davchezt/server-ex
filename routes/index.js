@@ -21,7 +21,6 @@ router.get('/', (req, res, next) => {
 
       return;
     }
-
     log.success(doc);
   });
 

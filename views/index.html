@@ -25,12 +25,14 @@
         <h2>Deploying code changes</h2>
 <pre>
 $ git clone https://github.com/davchezt/server-ex.git
+
+# navigate to project directory
+$ cd server-ex
+
 # switch to heroku branch
 $ git checkout heroku
 
-# Within your project directory
 # Commit your changes and push to heroku branch
-
 $ git add .
 $ git commit -a -m 'Some commit message'
 $ git push origin heroku
@@ -44,11 +46,12 @@ $ git push origin heroku
       <% if (pageCountMessage) { %>
           <span class="code" id="count-value"><%=pageCountMessage%></span> (<a href="/pagecount" title="view json format">json</a>)
           </p>
-          <div class="code"><h3>DB Connection Info:</h3>
-            <table style='margin-left: 20px'>
-                <tr><td>Type:</td><td><%= dbInfo.type %></td></tr>
-                <tr><td>URL:</td><td><%= dbInfo.url %></td></tr>
-                <tr><td>Remote:</td><td><%= dbInfo.remote %></td></tr>
+          <div>
+            <h2>DB Connection Info:</h2>
+            <table class="code">
+              <tr><td>Type</td> <td>:</td> <td><%= dbInfo.type %></td></tr>
+              <tr><td>URL</td> <td>:</td> <td><%= dbInfo.url %></td></tr>
+              <tr><td>Remote</td> <td>:</td> <td><%= dbInfo.remote %></td></tr>
             </table>
           </div>
       <% } else { %>

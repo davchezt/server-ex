@@ -34,19 +34,11 @@ app.use((req, res, next) => {
   next();
 });
 
-process.env.JWT_KEY = "DaVchezt.4Bahagia4";
-process.env.NODE_ENV = Config.mode;
-const isDev = process.env.NODE_ENV === "development" ? true : false;
+const isDev = Config.mode === "development" ? true : false;
 const dbConfig = Config.database;
 
-// MongoDB
+process.env.JWT_KEY = Config.jwtk;
 process.env.MONGO_URL = isDev ? Config.localdb : null;
-process.env.DATABASE_SERVICE_NAME = 'Militant';
-process.env.MILITANT_SERVICE_HOST = dbConfig.host;
-process.env.MILITANT_SERVICE_PORT = dbConfig.port;
-process.env.MILITANT_DATABASE     = dbConfig.database;
-process.env.MILITANT_PASSWORD     = dbConfig.password;
-process.env.MILITANT_USER         = dbConfig.user;
 
 let port = process.env.PORT || Config.port,
     ip   = process.env.IP   || Config.ip,
@@ -54,35 +46,26 @@ let port = process.env.PORT || Config.port,
 let db = null,
     dbDetails = new Object();
 
-if (!isDev) {
-  let mongoHost, mongoPort, mongoDatabase, mongoPassword, mongoUser;
-  if (process.env.DATABASE_SERVICE_NAME) {
-    let mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase();
-    mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'];
-    mongoPort = process.env[mongoServiceName + '_SERVICE_PORT'];
-    mongoDatabase = process.env[mongoServiceName + '_DATABASE'];
-    mongoPassword = process.env[mongoServiceName + '_PASSWORD'];
-    mongoUser = process.env[mongoServiceName + '_USER'];
-  }
+if (mongoURL === null) {
+  let mongoHost = dbConfig.host,
+      mongoPort = dbConfig.port,
+      mongoDatabase = dbConfig.database,
+      mongoPassword = dbConfig.password,
+      mongoUser = dbConfig.user;
 
   if (mongoHost && mongoPort && mongoDatabase) {
     mongoURL = 'mongodb://';
     if (mongoUser && mongoPassword) {
       mongoURL += mongoUser + ':' + mongoPassword + '@';
     }
-    // Provide UI label that excludes user id and pw
+
     mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
   }
 }
 
 mongoose.set("useCreateIndex", true);
 mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
-  if (err) {
-    log.error('Error in connection: ' + err);
-    
-    return;
-  }
-  
+  if (err) { log.error('Error in connection: ' + err); return; }
   db = conn;
   dbDetails.databaseName = db.databaseName;
   dbDetails.url = (conn.client.s.url ? conn.client.s.url : mongoURL).replace(dbConfig.user + ':' + dbConfig.password, 'xxx:xxx');
@@ -95,6 +78,7 @@ mongoose.Promise = global.Promise;
 // Routers
 const indexControllers = require("./routes/index");
 const chatsControllers = require("./routes/chat");
+const userControllers = require('./routes/user');
 
 // app.use(morgan("dev"));
 // app.use(morgan('combined'));
@@ -119,12 +103,22 @@ app.set("json spaces", 2); // pretty print
 
 app.use("/", indexControllers);
 app.use("/chat", chatsControllers);
+app.use("/user", userControllers);
 
 // Socket chat
-let clients = [];
-const Chat = require("./models/chat");
-io.on("connection", (socket) => {
+let clients = [],
+    in_room = [];
 
+const Chat = require('./models/chat');
+const User = require('./models/user');
+
+function getProfile(id) {
+  return User.findById({ _id: id })
+  .populate('profile', '-_id name')
+  .exec();
+}
+
+io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     clients = [];
     Object.keys(io.sockets.sockets).forEach(function(id) {
@@ -137,22 +131,42 @@ io.on("connection", (socket) => {
   });
 
   socket.on("set-nickname", (nickname) => {
-    socket.nickname = nickname;
-    clients = [];
-    Object.keys(io.sockets.sockets).forEach(function(id) {
-      clients.push({
-        id: id,
-        nickname: io.sockets.sockets[id].nickname
+    getProfile(nickname).then(result => {
+      socket.nickname = result.profile.name;
+      socket.profile = result.profile;
+      clients = [];
+      Object.keys(io.sockets.sockets).forEach(function(id) {
+        clients.push({
+          id: id,
+          nickname: io.sockets.sockets[id].nickname
+        });
+      })
+      io.emit("users-changed", { user: socket.nickname, connectedUser: clients/*io.engine.clientsCount*/, event: "joined" });
+    });
+  });
+
+  // Visit Chat page
+  socket.on("enter-room", () => {
+    if (in_room.length === 0) {
+      in_room.push(socket.nickname);
+    } else {
+      Object.keys(in_room).forEach(function() {
+        if (in_room.indexOf(socket.nickname) === -1) in_room.push(socket.nickname);
       });
-    })
-    io.emit("users-changed", { user: nickname, connectedUser: clients/*io.engine.clientsCount*/, event: "joined" });
+    }
+    io.emit("in-room", { user: socket.nickname, connectedUser: in_room, event: "joined" });
   });
-
-  socket.on("set-room", (nickname) => {
-    socket.to = nickname;
-    io.emit("users-add", { user: nickname, event: "add" });
+  // Leave Chat page
+  socket.on("leave-room", () => {
+    Object.keys(in_room).forEach(function(id) {
+      if (in_room[id] == socket.nickname) in_room.splice(id, 1);
+    });
+    in_room = in_room.filter((v,i) => in_room.indexOf(v) === i)
+    io.emit("in-room", { user: socket.nickname, connectedUser: in_room, event: "left" });
   });
-
+  // For notify other user outside Chat page
+  socket.on('new-message', () => { io.emit("new_message", socket.nickname); });
+  // Sumbit new Chat message
   socket.on("add-message", (message) => {
     io.emit("message", {
       text: message.text,
@@ -166,31 +180,19 @@ io.on("connection", (socket) => {
       created: Date.time()
     });
     chat.save((err, doc) => {
-      if (err) {
-        log.error("Error during record insertion : " + err);
-      } else {
-        log.success(doc);
-      }
+      if (err) { log.error("Error during record insertion : " + err); return; }
+      // log.success(doc);
     });
   });
-
-  socket.on("add-message-to", (message) => {
-    io.emit("message-to", {
-      text: message.text,
-      from: socket.nickname,
-      to: socket.to,
-      created: new Date()
-    });
-  });
-
+  
   socket.on("start-typing", (message) => {
-    socket.to = message.receiverId;
-    io.emit("start_typing", { from: socket.nickname, to: socket.to });
+    socket.form = message.form;
+    io.emit("start_typing", { from: socket.nickname, to: socket.form });
   });
 
   socket.on("stop-typing", (message) => {
-    socket.to = message.receiverId;
-    io.emit("stop_typing", { from: socket.nickname, to: socket.to });
+    socket.form = message.form;
+    io.emit("stop_typing", { from: socket.nickname, to: socket.form });
   });
 });
 
@@ -215,4 +217,4 @@ http.listen(port, ip, () => {
   log.success('listening at ' + ip + ' port: ' + port);
 });
 
-module.exports = app;
+module.exports = { app, io };

@@ -7,7 +7,7 @@ const Chat = require("../models/chat");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-  log.success(req.headers)
+  // log.success(req.headers)
   Chat.find()
   .select("from text created")
   .exec()
@@ -44,7 +44,6 @@ router.post("/", checkAuth, (req, res, next) => {
 
 router.get("/clear", (req, res, next) => {
   Chat.deleteMany({}, () => {
-    log.success("ChatRoom cleared");
     res.status(200).json({ message: "ChatRoom cleared" });
   }).catch(err => {
     log.error(err);
