@@ -38,7 +38,7 @@ const isDev = Config.mode === "development" ? true : false;
 const dbConfig = Config.database;
 
 process.env.JWT_KEY = Config.jwtk;
-process.env.MONGO_URL = isDev ? Config.localdb : null;
+process.env.MONGO_URL = isDev ? Config.localdb : '';
 
 let port = process.env.PORT || Config.port,
     ip   = process.env.IP   || Config.ip,
@@ -46,7 +46,7 @@ let port = process.env.PORT || Config.port,
 let db = null,
     dbDetails = new Object();
 
-if (mongoURL === null) {
+if (!mongoURL) {
   let mongoHost = dbConfig.host,
       mongoPort = dbConfig.port,
       mongoDatabase = dbConfig.database,
