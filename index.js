@@ -15,11 +15,11 @@ Date.time = function() {
   return new Date().toUnixTime();
 };
 
-app.engine('html', require('ejs').renderFile);
-
-// Helper
+// Helper & Config
 const log = require("./helpers/loger");
+const config = require("./config.json");
 
+app.engine('html', require('ejs').renderFile);
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
@@ -33,68 +33,25 @@ app.use((req, res, next) => {
   next();
 });
 
-process.env.JWT_KEY = "DaVchezt.4Bahagia4";
-process.env.NODE_ENV = "development";
-const isDev = process.env.NODE_ENV === "development" ? true : false;
-process.env.MONGO_URL = isDev ? 'mongodb://localhost:27017/agrifarm':'mongodb://davchezt:4Bahagia4@ds123624.mlab.com:23624/agrifarm';
+process.env.JWT_KEY = config.jwtk;
+const isDev = config.mode === "development" ? true : false;
+process.env.MONGO_URL = isDev ? config.db.local : config.db.remote;
 
-let port = process.env.PORT || process.env.OPENSHIFT_NODEJS_PORT || 8080,
-    ip   = process.env.IP   || process.env.OPENSHIFT_NODEJS_IP || '0.0.0.0',
-    mongoURL = process.env.OPENSHIFT_MONGODB_DB_URL || process.env.MONGO_URL,
-    mongoURLLabel = "";
-let db = null,
+let port      = process.env.PORT || config.port,
+    ip        = process.env.IP   || config.host,
+    mongoURL  = process.env.MONGO_URL;
+let db        = null,
     dbDetails = new Object();
-
-if (mongoURL == null) {
-  let mongoHost, mongoPort, mongoDatabase, mongoPassword, mongoUser;
-  // If using plane old env vars via service discovery
-  if (process.env.DATABASE_SERVICE_NAME) {
-    let mongoServiceName = process.env.DATABASE_SERVICE_NAME.toUpperCase();
-    mongoHost = process.env[mongoServiceName + '_SERVICE_HOST'];
-    mongoPort = process.env[mongoServiceName + '_SERVICE_PORT'];
-    mongoDatabase = process.env[mongoServiceName + '_DATABASE'];
-    mongoPassword = process.env[mongoServiceName + '_PASSWORD'];
-    mongoUser = process.env[mongoServiceName + '_USER'];
-
-  // If using env vars from secret from service binding  
-  } else if (process.env.database_name) {
-    mongoDatabase = process.env.database_name;
-    mongoPassword = process.env.password;
-    mongoUser = process.env.username;
-    let mongoUriParts = process.env.uri && process.env.uri.split("//");
-    if (mongoUriParts.length == 2) {
-      mongoUriParts = mongoUriParts[1].split(":");
-      if (mongoUriParts && mongoUriParts.length == 2) {
-        mongoHost = mongoUriParts[0];
-        mongoPort = mongoUriParts[1];
-      }
-    }
-  }
-
-  if (mongoHost && mongoPort && mongoDatabase) {
-    mongoURLLabel = mongoURL = 'mongodb://';
-    if (mongoUser && mongoPassword) {
-      mongoURL += mongoUser + ':' + mongoPassword + '@';
-    }
-    // Provide UI label that excludes user id and pw
-    mongoURLLabel += mongoHost + ':' + mongoPort + '/' + mongoDatabase;
-    mongoURL += mongoHost + ':' +  mongoPort + '/' + mongoDatabase;
-  }
-}
 
 mongoose.set("useCreateIndex", true);
 mongoose.connect(mongoURL, { useNewUrlParser: true }, (err, conn) => {
-  if (err) {
-    log.error('Error in connection: ' + err);
-    
-    return;
-  }
+  if (err) { log.error('Error in connection: ' + err); return; }
   
   db = conn;
   dbDetails.databaseName = db.databaseName;
-  dbDetails.url = mongoURLLabel ? mongoURLLabel : conn.client.s.url;
+  dbDetails.url = mongoURL;
   dbDetails.type = 'MongoDB';
-  log.success('Connected to MongoDB at: ' + conn.client.s.url);
+  dbDetails.remote = !isDev;
 });
 mongoose.Promise = global.Promise;
 
@@ -154,11 +111,6 @@ io.on("connection", (socket) => {
     io.emit("users-changed", { user: nickname, connectedUser: clients/*io.engine.clientsCount*/, event: "joined" });
   });
 
-  socket.on("set-room", (nickname) => {
-    socket.to = nickname;
-    io.emit("users-add", { user: nickname, event: "add" });
-  });
-
   socket.on("add-message", (message) => {
     io.emit("message", {
       text: message.text,
@@ -177,15 +129,6 @@ io.on("connection", (socket) => {
       } else {
         log.success(doc);
       }
-    });
-  });
-
-  socket.on("add-message-to", (message) => {
-    io.emit("message-to", {
-      text: message.text,
-      from: socket.nickname,
-      to: socket.to,
-      created: new Date()
     });
   });
 
