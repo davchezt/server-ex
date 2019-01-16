@@ -7,7 +7,7 @@ const Chat = require("../models/chat");
 
 /* GET home page. */
 router.get('/', (req, res, next) => {
-  log.success(req.headers)
+  // log.success(req.headers)
   Chat.find()
   .select("from text created")
   .exec()

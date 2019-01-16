@@ -84,7 +84,8 @@ app.use("/", indexControllers);
 app.use("/chat", chatsControllers);
 
 // Socket chat
-let clients = [];
+let clients = [],
+    in_room = [];
 const Chat = require("./models/chat");
 io.on("connection", (socket) => {
 
@@ -95,8 +96,8 @@ io.on("connection", (socket) => {
         id: id,
         nickname: io.sockets.sockets[id].nickname
       });
-    })
-    io.emit("users-changed", { user: socket.nickname, connectedUser: clients/*io.engine.clientsCount - 1*/, event: "left" });
+    });
+    io.emit("users-changed", { user: socket.nickname, connectedUser: clients, event: "left" });
   });
 
   socket.on("set-nickname", (nickname) => {
@@ -107,16 +108,36 @@ io.on("connection", (socket) => {
         id: id,
         nickname: io.sockets.sockets[id].nickname
       });
-    })
-    io.emit("users-changed", { user: nickname, connectedUser: clients/*io.engine.clientsCount*/, event: "joined" });
+    });
+    io.emit("users-changed", { user: nickname, connectedUser: clients, event: "joined" });
   });
 
-  socket.on("add-message", (message) => {
-    io.emit("message", {
-      text: message.text,
-      from: socket.nickname,
-      created: Date.time()
+  // Visit Chat page
+  socket.on("enter-room", () => {
+    if (in_room.length === 0) {
+      in_room.push(socket.nickname);
+    } else {
+      Object.keys(in_room).forEach(function() {
+        if (in_room.indexOf(socket.nickname) === -1) in_room.push(socket.nickname);
+      });
+    }
+    io.emit("in-room", { user: socket.nickname, connectedUser: in_room, event: "joined" });
+  });
+
+  // Leave Chat page
+  socket.on("leave-room", () => {
+    Object.keys(in_room).forEach(function(id) {
+      if (in_room[id] == socket.nickname) in_room.splice(id, 1);
     });
+    in_room = in_room.filter((v,i) => in_room.indexOf(v) === i)
+    io.emit("in-room", { user: socket.nickname, connectedUser: in_room, event: "left" });
+  });
+
+  // For notify other user outside Chat page
+  socket.on('new-message', () => { io.emit("new_message", socket.nickname); });
+
+  // Sumbit new Chat message
+  socket.on("add-message", (message) => {
     const chat = new Chat({
       _id: mongoose.Types.ObjectId(),
       text: message.text,
@@ -124,22 +145,20 @@ io.on("connection", (socket) => {
       created: Date.time()
     });
     chat.save((err, doc) => {
-      if (err) {
-        log.error("Error during record insertion : " + err);
-      } else {
-        log.success(doc);
-      }
+      if (err) { log.error("Error during record insertion : " + err); return; }
+
+      io.emit("message", { text: message.text, from: socket.nickname, created: Date.time() });
     });
   });
-
+  
   socket.on("start-typing", (message) => {
-    socket.to = message.receiverId;
-    io.emit("start_typing", { from: socket.nickname, to: socket.to });
+    socket.form = message.form;
+    io.emit("start_typing", { from: socket.nickname, to: socket.form });
   });
 
   socket.on("stop-typing", (message) => {
-    socket.to = message.receiverId;
-    io.emit("stop_typing", { from: socket.nickname, to: socket.to });
+    socket.form = message.form;
+    io.emit("stop_typing", { from: socket.nickname, to: socket.form });
   });
 });
 

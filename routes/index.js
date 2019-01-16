@@ -16,11 +16,7 @@ router.get('/', (req, res, next) => {
     date: Date.time()
   });
   count.save((err, doc) => {
-    if (err) {
-      log.error("Error during record insertion : " + err);
-
-      return;
-    }
+    if (err) { log.error("Error during record insertion : " + err); return; }
 
     log.success(doc);
   });
