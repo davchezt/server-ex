@@ -79,6 +79,7 @@ mongoose.Promise = global.Promise;
 const indexControllers = require("./routes/index");
 const chatsControllers = require("./routes/chat");
 const userControllers = require('./routes/user');
+const feedControllers = require("./routes/feed");
 
 // app.use(morgan("dev"));
 // app.use(morgan('combined'));
@@ -104,6 +105,7 @@ app.set("json spaces", 2); // pretty print
 app.use("/", indexControllers);
 app.use("/chat", chatsControllers);
 app.use("/user", userControllers);
+app.use("/feed", feedControllers);
 
 // Socket chat
 let clients = [],
